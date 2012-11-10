@@ -61,7 +61,10 @@ class Controller_Komust extends Controller {
 				$this->template = $this->request->controller() . '/' . $this->request->action() . $this->template_ext;
 			}
 
-			$this->response->body($this->komust->engine()->render($this->template, $this->template_data));			
+			// check if profiling is enabled and add the profiler stats view to the response body
+			$profiling_view = (Kohana::$profiling === TRUE) ? View::factory('profiler/stats') : '';
+
+			$this->response->body($this->komust->engine()->render($this->template, $this->template_data).$profiling_view);			
 		}
 
 		parent::after();
