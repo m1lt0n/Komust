@@ -4,9 +4,8 @@
  * Controller utilizing mustache templates
  *
  * By extending Controller_Komust, the only action needed by default is
- * to set Controller_Must::$template_data in the controller's action and
- * this will render a template located in templates/ControllerName/actionName.mustache,
- * which is aware of these data.
+ * to set Controller_Komust::$layout in the controller's action and then
+ * call Controller_Komust::render with the partial view's data.
  *
  * @author Pantelis Vratsalis
  * @copyright 2012 Pantelis Vratsalis
@@ -17,20 +16,11 @@ class Controller_Komust extends Controller {
 	// The instance of Komust, which holds the Mustach_Engine
 	protected $komust;
 
-	// The template file or string. When not set, the controller will look
-	// in templates/ControllerName/actionName.mustache for a template
-	protected $template = NULL;
-
-	// The template data. They can be either an associative array or
-	// an object
-	protected $template_data = array();
-
-	// By default, without any more code needed, the template is rendered
-	// and populates the response body
-	protected $auto_output = TRUE;
-
-	// The default template extension, can be overriden
-	protected $template_ext = '.mustache';
+	// The template file or string.
+	protected $layout = NULL;
+	
+	// The extension of templates.
+	protected $template_extension = '.mustache';
 
 	/**
 	 * Before sets the Komust instance, making it use the filesystem loader by default
@@ -43,41 +33,33 @@ class Controller_Komust extends Controller {
 		parent::before();
 		$this->komust = Komust::factory('filesystem');
 	}
-
-	/**
-	 * After checks if auto_output is ON (default behaviour) and if so,
-	 * checks if a template has been set, otherwise it tries to load following
-	 * the naming convention templates/ControllerName/actionName.extension.
-	 *
-	 * @access public
-	 * @return void
-	 */
-	public function after()
-	{
-		if ($this->auto_output)
-		{
-			if ($this->template === NULL AND ($this->komust->engine()->getLoader() instanceof Mustache_Loader_FilesystemLoader))
-			{
-				$this->template = $this->request->controller() . '/' . $this->request->action() . $this->template_ext;
-			}
-
-			// check if profiling is enabled and add the profiler stats view to the response body
-			$profiling_view = (Kohana::$profiling === TRUE) ? View::factory('profiler/stats') : '';
-
-			$this->response->body($this->komust->engine()->render($this->template, $this->template_data).$profiling_view);			
-		}
-
-		parent::after();
-	}
 	
 	/**
-	 * Shortcut to Mustache_Engine::render
+	 * Given a mustache template, it renders it with the data provided
+	 * and adds the rendered result to the original data as content. 
+	 * Then, it renders the mustache layout with the new data. 
 	 * 
-	 * @param string $template the template
+	 * @param string $view_file the template/view
 	 * @param mixed $data array or object holding the template data
+	 * @param boolean $with_layout (optional) renders layout with rendered view as content
+	 * @access public
 	 */
-	public function render($template, $data)
+	public function render($view_file, $data, $with_layout = TRUE)
 	{
-	    return $this->komust->engine()->render($template, $data);
+	    // render the view mustache template with the provided data
+	    $content = $this->komust->engine()->render($view_file.$this->template_extension, $data);	     
+	    
+	    // if no layout has been set or $with_layout option is set to FALSE, 
+	    // return the rendered view (kind of render partial)
+	    if ($with_layout === FALSE OR $this->layout === NULL)
+            return $content;
+	     	     	    
+	    // add the rendered view to the $data array or object
+	    if (is_array($data))
+	        $data['content'] = $content;
+	    else if (is_object($data))
+	        $data->content = $content;
+
+	    return $this->komust->engine()->render($this->layout.$this->template_extension, $data);
 	}
 }
