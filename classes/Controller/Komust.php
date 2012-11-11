@@ -69,5 +69,15 @@ class Controller_Komust extends Controller {
 
 		parent::after();
 	}
-
+	
+	/**
+	 * Shortcut to Mustache_Engine::render
+	 * 
+	 * @param string $template the template
+	 * @param mixed $data array or object holding the template data
+	 */
+	public function render($template, $data)
+	{
+	    return $this->komust->engine()->render($template, $data);
+	}
 }
