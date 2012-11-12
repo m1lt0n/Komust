@@ -40,12 +40,14 @@ class Controller_Komust extends Controller {
 	 * Then, it renders the mustache layout with the new data. 
 	 * 
 	 * @param string $view_file the template/view
-	 * @param mixed $data array or object holding the template data
+	 * @param mixed $data (optional) array or object holding the template data
 	 * @param boolean $with_layout (optional) renders layout with rendered view as content
 	 * @access public
 	 */
-	public function render($view_file, $data, $with_layout = TRUE)
+	public function render($view_file, $data = NULL, $with_layout = TRUE)
 	{
+		$data = ($data === NULL) ? array() : $data;
+
 	    // render the view mustache template with the provided data
 	    $content = $this->komust->engine()->render($view_file.$this->template_extension, $data);	     
 	    
